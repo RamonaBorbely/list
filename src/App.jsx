@@ -30,16 +30,33 @@ function App() {
 
     setTimeout(() => {
       fetchData()
-    }, 3000)
+    }, 2000)
   
   }, [])
   
 
-  const addItem = (item) => {
+  const addItem = async(item) => {
     const id = items.length ? items[items.length -1].id + 1 : 1
     const theItem = {id, item, checked: false}
     const newList = [...items, theItem]
     setItems(newList)
+
+    const postOpt = {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(theItem)
+    }
+  
+    try {
+      const response = await fetch(URL_API, postOpt) 
+      if(!response.ok) throw Error('Oops! Error occured')
+    } catch(err) {
+        setFetchErr(err.message)
+    } finally {
+      setFetchErr(err.message)
+    }
   }
   
   const handleSubmit = (e) => {
@@ -49,14 +66,44 @@ function App() {
     setNewItem('')
   }
 
-  const handleDelete = (id) => {
+  const handleDelete = async(id) => {
     const newList = items.filter(item => item.id !== id)
     setItems(newList)
+
+    const deleteOpt = {
+      method: 'DELETE',
+    }
+    try {
+      const response = await fetch(`${URL_API}/${id}`, deleteOpt) 
+      if(!response.ok) throw Error('Oops! Error occured')
+    } catch(err) {
+        setFetchErr(err.message)
+    } finally {
+        setFetchErr(err.message)
+    }
+
   }
 
-  const handleCheck = (id) => {
+  const handleCheck = async(id) => {
     const newList = items.map(item => item.id === id ? {...item, checked: !item.checked} : item)
     setItems(newList)
+
+    const checkedItem = newList.filter(item => item.id === id)
+    const updateOpt = {
+      method: 'PATCH',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({checked: checkedItem[0].checked})
+    }
+    try {
+      const response = await fetch(`${URL_API}/${id}`, updateOpt) 
+      if(!response.ok) throw Error('Oops! Error occured')
+    } catch(err) {
+        setFetchErr(err.message)
+    } finally {
+        setFetchErr(err.message)
+    }
   }
 
   return (
@@ -65,14 +112,18 @@ function App() {
 
       <ShowLength length={items.length}/>
 
-      {isLoading ? <h2 style={{color:'green', textAlign:'center'}}>Loading data ...</h2> :
+      {isLoading ? <h2 style={{color:'green', textAlign:'center', backgroundColor:'pink'}}>Loading data ...</h2> :
           <ItemsList 
           items={items}
           handleDelete={handleDelete}
           handleCheck={handleCheck}
       />
       }
-      {fetchErr && <h2 style={{color:'red', textAlign:'center'}}>{`Error: ${fetchErr}`}</h2>}
+      {fetchErr && 
+        <h2 style={{color:'red', textAlign:'center', backgroundColor:'pink'}}>
+          {`Error: ${fetchErr}`}
+        </h2>
+      }
       
       <AddItem 
           handleSubmit={handleSubmit}
