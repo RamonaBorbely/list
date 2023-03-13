@@ -1,30 +1,39 @@
 import Header from "./components/Header"
 import ItemsList from "./components/ItemsList"
 import AddItem from "./components/AddItem"
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import ShowLength from "./components/ShowLength"
 function App() {
 
+  const URL_API = 'http://localhost:3500/items'
   const [newItem, setNewItem] = useState('')
-  const [items, setItems] = useState([
-    {
-      id:1,
-      item: 'item1',
-      checked: false
-    },
-    {
-      id:2,
-      item: 'item2',
-      checked: false
+  const [items, setItems] = useState([])
+  const [fetchErr, setFetchErr] = useState(null)
+  const [isLoading, setIsLoading] = useState(true)
 
-    },
-    {
-      id:3,
-      item: 'item3',
-      checked: false
+  useEffect(() => {
+    const fetchData = async() => {
+        try {
+          const response = await fetch(URL_API)
+          if(!response.ok) 
+            throw Error("No data")
+          const lst = await response.json()
+          setItems(lst)
+          setFetchErr(null)
 
-    },
-  ])
+        } catch (err) {
+          setFetchErr(err.message)
+        } finally {
+          setIsLoading(false)
+        }
+    }
+
+    setTimeout(() => {
+      fetchData()
+    }, 3000)
+  
+  }, [])
+  
 
   const addItem = (item) => {
     const id = items.length ? items[items.length -1].id + 1 : 1
@@ -56,12 +65,15 @@ function App() {
 
       <ShowLength length={items.length}/>
 
-      <ItemsList 
+      {isLoading ? <h2 style={{color:'green', textAlign:'center'}}>Loading data ...</h2> :
+          <ItemsList 
           items={items}
           handleDelete={handleDelete}
           handleCheck={handleCheck}
       />
-          
+      }
+      {fetchErr && <h2 style={{color:'red', textAlign:'center'}}>{`Error: ${fetchErr}`}</h2>}
+      
       <AddItem 
           handleSubmit={handleSubmit}
           newItem={newItem}
